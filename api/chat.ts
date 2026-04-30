@@ -3,6 +3,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const TINKROW_API_URL = 'https://base.tinkrow.space/api/chat/v1/chat/completions';
 const API_KEY = process.env.TINKROW_API_KEY;
 
+export const maxDuration = 60; // Allow function to run for up to 60 seconds
+
 const MODE_CONFIG = {
   excel: {
     model: 'vertex_ai/qwen/qwen3-coder-480b-a35b-instruct-maas',
@@ -22,7 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (!API_KEY) {
-    return res.status(500).json({ error: 'API key not configured' });
+    return res.status(500).json({ error: 'API key not configured in Vercel' });
   }
 
   const { mode, messages } = req.body as {
@@ -49,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': API_KEY,
+        'Authorization': `Bearer ${API_KEY}`,
       },
       body: JSON.stringify({
         model: config.model,
