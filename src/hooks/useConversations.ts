@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Conversation, Message, Mode } from '../types';
 import {
   getConversations,
@@ -20,12 +20,15 @@ export function useConversations(mode: Mode) {
     getActiveConversationId(mode)
   );
 
+  const activeIdRef = useRef<string | null>(activeId);
+
   // Re-load when mode changes
   useEffect(() => {
     const convs = getConversations(mode);
     setConversations(convs);
     const savedActive = getActiveConversationId(mode);
     setActiveId(savedActive);
+    activeIdRef.current = savedActive;
   }, [mode]);
 
   const persist = useCallback(
@@ -47,16 +50,23 @@ export function useConversations(mode: Mode) {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
-    const updated = [conv, ...conversations];
-    persist(updated);
+    // Need to use functional update to ensure we don't have stale conversations state
+    setConversations((prev) => {
+      const updated = [conv, ...prev];
+      saveConversations(mode, updated);
+      return updated;
+    });
+    
     setActiveId(conv.id);
+    activeIdRef.current = conv.id;
     setActiveConversationId(mode, conv.id);
     return conv;
-  }, [conversations, mode, persist]);
+  }, [mode]);
 
   const selectConversation = useCallback(
     (id: string) => {
       setActiveId(id);
+      activeIdRef.current = id;
       setActiveConversationId(mode, id);
     },
     [mode]
@@ -64,22 +74,28 @@ export function useConversations(mode: Mode) {
 
   const deleteConversation = useCallback(
     (id: string) => {
-      const updated = conversations.filter((c) => c.id !== id);
-      persist(updated);
-      if (activeId === id) {
-        const newActive = updated.length > 0 ? updated[0].id : null;
-        setActiveId(newActive);
-        setActiveConversationId(mode, newActive);
-      }
+      setConversations((prev) => {
+        const updated = prev.filter((c) => c.id !== id);
+        saveConversations(mode, updated);
+        
+        if (activeIdRef.current === id) {
+          const newActive = updated.length > 0 ? updated[0].id : null;
+          setActiveId(newActive);
+          activeIdRef.current = newActive;
+          setActiveConversationId(mode, newActive);
+        }
+        return updated;
+      });
     },
-    [conversations, activeId, mode, persist]
+    [mode]
   );
 
   const addMessage = useCallback(
     (message: Message) => {
       setConversations((prev) => {
+        const targetId = activeIdRef.current;
         const updated = prev.map((c) => {
-          if (c.id !== activeId) return c;
+          if (c.id !== targetId) return c;
           const messages = [...c.messages, message];
           const title =
             c.messages.length === 0 && message.role === 'user'
@@ -91,11 +107,12 @@ export function useConversations(mode: Mode) {
         return updated;
       });
     },
-    [activeId, mode]
+    [mode]
   );
 
   const clearActive = useCallback(() => {
     setActiveId(null);
+    activeIdRef.current = null;
     setActiveConversationId(mode, null);
   }, [mode]);
 
