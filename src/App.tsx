@@ -46,7 +46,6 @@ function App() {
     messages: activeConversation?.messages || [],
     onUserMessage: addMessage,
     onAssistantMessage: addMessage,
-    onAssistantMessageUpdate: updateMessage,
     ensureConversation,
   });
 

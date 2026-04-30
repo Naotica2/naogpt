@@ -1,9 +1,9 @@
-export const config = {
-  runtime: 'edge',
-};
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const TINKROW_API_URL = 'https://base.tinkrow.space/api/chat/v1/chat/completions';
 const API_KEY = process.env.TINKROW_API_KEY;
+
+export const maxDuration = 60;
 
 const MODE_CONFIG = {
   excel: {
@@ -18,36 +18,35 @@ const MODE_CONFIG = {
   },
 } as const;
 
-export default async function handler(req: Request) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   if (!API_KEY) {
-    return new Response(JSON.stringify({ error: 'API key not configured in Vercel' }), { status: 500 });
+    return res.status(500).json({ error: 'API key not configured in Vercel' });
   }
 
+  const { mode, messages } = req.body as {
+    mode: 'chat' | 'excel';
+    messages: { role: string; content: string }[];
+  };
+
+  if (!mode || !messages || !Array.isArray(messages)) {
+    return res.status(400).json({ error: 'Invalid request body' });
+  }
+
+  const config = MODE_CONFIG[mode];
+  if (!config) {
+    return res.status(400).json({ error: 'Invalid mode' });
+  }
+
+  const apiMessages = [
+    { role: 'system', content: config.systemPrompt },
+    ...messages,
+  ];
+
   try {
-    const body = await req.json();
-    const { mode, messages } = body as {
-      mode: 'chat' | 'excel';
-      messages: { role: string; content: string }[];
-    };
-
-    if (!mode || !messages || !Array.isArray(messages)) {
-      return new Response(JSON.stringify({ error: 'Invalid request body' }), { status: 400 });
-    }
-
-    const configItem = MODE_CONFIG[mode];
-    if (!configItem) {
-      return new Response(JSON.stringify({ error: 'Invalid mode' }), { status: 400 });
-    }
-
-    const apiMessages = [
-      { role: 'system', content: configItem.systemPrompt },
-      ...messages,
-    ];
-
     const response = await fetch(TINKROW_API_URL, {
       method: 'POST',
       headers: {
@@ -55,30 +54,25 @@ export default async function handler(req: Request) {
         'x-api-key': API_KEY,
       },
       body: JSON.stringify({
-        model: configItem.model,
+        model: config.model,
         messages: apiMessages,
         temperature: mode === 'excel' ? 0.3 : 0.7,
         max_tokens: 2048,
-        stream: true,
       }),
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Tinkrow API error:', response.status, errorText);
-      return new Response(JSON.stringify({ error: `Upstream API error: ${response.status}` }), { status: response.status });
+      const errorBody = await response.text();
+      console.error('Tinkrow API error:', response.status, errorBody);
+      return res.status(response.status).json({
+        error: `Upstream API error: ${response.status}`,
+      });
     }
 
-    return new Response(response.body, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    });
-
+    const data = await response.json();
+    return res.status(200).json(data);
   } catch (error) {
     console.error('API proxy error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }

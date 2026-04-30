@@ -12,7 +12,6 @@ interface UseChatOptions {
   messages: Message[];
   onUserMessage: (message: Message) => void;
   onAssistantMessage: (message: Message) => void;
-  onAssistantMessageUpdate: (id: string, content: string) => void;
   ensureConversation: () => void;
 }
 
@@ -21,7 +20,6 @@ export function useChat({
   messages,
   onUserMessage,
   onAssistantMessage,
-  onAssistantMessageUpdate,
   ensureConversation,
 }: UseChatOptions) {
   const [isLoading, setIsLoading] = useState(false);
@@ -53,22 +51,16 @@ export function useChat({
       setIsLoading(true);
 
       try {
-        const assistantId = generateId();
-        let assistantContent = '';
+        const response = await sendMessage(mode, allMessages);
 
         const assistantMessage: Message = {
-          id: assistantId,
+          id: generateId(),
           role: 'assistant',
-          content: assistantContent,
+          content: response,
           timestamp: Date.now(),
         };
 
         onAssistantMessage(assistantMessage);
-
-        await sendMessage(mode, allMessages, (chunk) => {
-          assistantContent += chunk;
-          onAssistantMessageUpdate(assistantId, assistantContent);
-        });
       } catch (err) {
         if (err instanceof RateLimitError) {
           setRateLimitInfo({ active: true, retryAfter: err.retryAfter });
@@ -79,7 +71,7 @@ export function useChat({
         setIsLoading(false);
       }
     },
-    [mode, messages, isLoading, onUserMessage, onAssistantMessage, onAssistantMessageUpdate, ensureConversation]
+    [mode, messages, isLoading, onUserMessage, onAssistantMessage, ensureConversation]
   );
 
   const dismissRateLimit = useCallback(() => {
