@@ -17,7 +17,7 @@ export function Header({
   onToggleSidebar,
 }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 sm:px-6 glass border-b-0">
+    <header className="flex-shrink-0 flex items-center justify-between h-14 px-4 sm:px-6 bg-transparent">
       {/* Left: hamburger + brand */}
       <div className="flex items-center gap-4 w-1/3">
         <button

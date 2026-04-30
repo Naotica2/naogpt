@@ -24,6 +24,7 @@ function App() {
     selectConversation,
     deleteConversation,
     addMessage,
+    updateMessage,
     clearActive,
   } = useConversations(mode);
 
@@ -45,6 +46,7 @@ function App() {
     messages: activeConversation?.messages || [],
     onUserMessage: addMessage,
     onAssistantMessage: addMessage,
+    onAssistantMessageUpdate: updateMessage,
     ensureConversation,
   });
 
@@ -62,28 +64,28 @@ function App() {
   }, [clearActive]);
 
   return (
-    <div className="h-dvh flex flex-col">
-      <Header
+    <div className="h-dvh flex overflow-hidden bg-white dark:bg-neutral-950">
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        conversations={conversations}
+        activeId={activeId}
         mode={mode}
-        onModeChange={handleModeChange}
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        onToggleSidebar={() => setSidebarOpen((v) => !v)}
+        onSelect={selectConversation}
+        onDelete={deleteConversation}
+        onNewChat={handleNewChat}
       />
 
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          conversations={conversations}
-          activeId={activeId}
+      <main className="flex-1 flex flex-col min-w-0 relative">
+        <Header
           mode={mode}
-          onSelect={selectConversation}
-          onDelete={deleteConversation}
-          onNewChat={handleNewChat}
+          onModeChange={handleModeChange}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onToggleSidebar={() => setSidebarOpen((v) => !v)}
         />
-
-        <main className="flex-1 flex flex-col min-w-0">
+        
+        <div className="flex-1 flex flex-col overflow-hidden">
           <ChatView
             messages={activeConversation?.messages || []}
             mode={mode}
@@ -92,8 +94,8 @@ function App() {
             onClearError={clearError}
           />
           <ChatInput mode={mode} onSend={send} isLoading={isLoading} />
-        </main>
-      </div>
+        </div>
+      </main>
 
       <RateLimitToast
         active={rateLimitInfo.active}

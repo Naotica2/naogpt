@@ -42,7 +42,6 @@ export function useConversations(mode: Mode) {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
-    // Need to use functional update to ensure we don't have stale conversations state
     setConversations((prev) => {
       const updated = [conv, ...prev];
       saveConversations(mode, updated);
@@ -102,6 +101,24 @@ export function useConversations(mode: Mode) {
     [mode]
   );
 
+  const updateMessage = useCallback(
+    (messageId: string, content: string) => {
+      setConversations((prev) => {
+        const targetId = activeIdRef.current;
+        const updated = prev.map((c) => {
+          if (c.id !== targetId) return c;
+          const messages = c.messages.map((m) =>
+            m.id === messageId ? { ...m, content } : m
+          );
+          return { ...c, messages, updatedAt: Date.now() };
+        });
+        saveConversations(mode, updated);
+        return updated;
+      });
+    },
+    [mode]
+  );
+
   const clearActive = useCallback(() => {
     setActiveId(null);
     activeIdRef.current = null;
@@ -116,6 +133,7 @@ export function useConversations(mode: Mode) {
     selectConversation,
     deleteConversation,
     addMessage,
+    updateMessage,
     clearActive,
   };
 }

@@ -40,7 +40,7 @@ export function ChatView({ messages, mode, isLoading, error, onClearError }: Cha
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-3xl mx-auto px-4 py-6 min-h-full flex flex-col">
+      <div className="max-w-5xl mx-auto px-4 py-6 min-h-full flex flex-col">
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center animate-fade-in-up">
             <div className={`relative p-8 rounded-3xl glass text-center max-w-md w-full overflow-hidden`}>

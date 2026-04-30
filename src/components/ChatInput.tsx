@@ -42,7 +42,7 @@ export function ChatInput({ mode, onSend, isLoading }: ChatInputProps) {
 
   return (
     <div className="bg-gradient-to-t from-white via-white to-white/0 dark:from-neutral-950 dark:via-neutral-950 dark:to-neutral-950/0 p-4 pt-6">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <div className="relative flex items-end gap-2 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border border-neutral-200/60 dark:border-neutral-700/60 rounded-2xl p-2 shadow-lg shadow-neutral-200/50 dark:shadow-none focus-within:ring-2 focus-within:ring-indigo-500/30 focus-within:border-indigo-500/50 transition-all">
           <textarea
             ref={textareaRef}
