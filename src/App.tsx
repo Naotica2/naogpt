@@ -24,7 +24,6 @@ function App() {
     selectConversation,
     deleteConversation,
     addMessage,
-    updateMessage,
     clearActive,
   } = useConversations(mode);
 
