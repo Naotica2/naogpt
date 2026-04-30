@@ -31,14 +31,6 @@ export function useConversations(mode: Mode) {
     activeIdRef.current = savedActive;
   }, [mode]);
 
-  const persist = useCallback(
-    (convs: Conversation[]) => {
-      setConversations(convs);
-      saveConversations(mode, convs);
-    },
-    [mode]
-  );
-
   const activeConversation = conversations.find((c) => c.id === activeId) || null;
 
   const createConversation = useCallback((): Conversation => {
