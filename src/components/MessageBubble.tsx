@@ -1,8 +1,16 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, FileText, FileCode } from 'lucide-react';
 import type { Message as MessageType } from '../types';
+import { formatFileSize } from '../utils/fileProcessor';
+
+function getFileIcon(name: string) {
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  const codeExts = ['js', 'ts', 'tsx', 'jsx', 'py', 'java', 'c', 'cpp', 'go', 'rs', 'rb', 'php', 'swift', 'kt', 'html', 'css', 'scss', 'sql', 'vue', 'svelte'];
+  if (codeExts.includes(ext)) return FileCode;
+  return FileText;
+}
 
 interface MessageBubbleProps {
   message: MessageType;
@@ -21,7 +29,12 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         }`}
       >
         {isUser ? (
-          <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{message.content}</p>
+          <>
+            {message.attachment && (
+              <AttachmentChip name={message.attachment.name} size={message.attachment.size} isUser />
+            )}
+            <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{message.content}</p>
+          </>
         ) : (
           <div className="text-[15px] leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:my-0 prose-pre:bg-transparent prose-pre:p-0">
             <ReactMarkdown
@@ -144,6 +157,23 @@ function CodeBlock({ children, language }: { children: string; language?: string
       <pre className="p-4 overflow-x-auto text-[13px] leading-relaxed font-mono text-neutral-800 dark:text-neutral-300">
         <code>{children}</code>
       </pre>
+    </div>
+  );
+}
+
+function AttachmentChip({ name, size, isUser }: { name: string; size: number; isUser?: boolean }) {
+  const Icon = getFileIcon(name);
+  return (
+    <div className={`flex items-center gap-2 px-3 py-2 rounded-xl mb-3 ${
+      isUser
+        ? 'bg-white/15 backdrop-blur-sm'
+        : 'bg-neutral-50 dark:bg-neutral-700/50 border border-neutral-200 dark:border-neutral-600'
+    }`}>
+      <Icon size={16} className={isUser ? 'text-white/80' : 'text-indigo-500 dark:text-indigo-400'} />
+      <div className="min-w-0 flex-1">
+        <p className={`text-xs font-medium truncate ${isUser ? 'text-white' : 'text-neutral-700 dark:text-neutral-300'}`}>{name}</p>
+        <p className={`text-[10px] ${isUser ? 'text-white/60' : 'text-neutral-400 dark:text-neutral-500'}`}>{formatFileSize(size)}</p>
+      </div>
     </div>
   );
 }

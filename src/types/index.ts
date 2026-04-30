@@ -1,10 +1,18 @@
 export type Mode = 'chat' | 'excel';
 
+export interface FileAttachment {
+  name: string;
+  type: string;
+  size: number;
+  textContent: string;
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  attachment?: FileAttachment;
 }
 
 export interface Conversation {

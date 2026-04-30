@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { Message, Mode } from '../types';
+import type { Message, Mode, FileAttachment } from '../types';
 import { RateLimitError } from '../types';
 import { sendMessage } from '../utils/api';
 
@@ -30,23 +30,36 @@ export function useChat({
   }>({ active: false, retryAfter: 0 });
 
   const send = useCallback(
-    async (content: string) => {
-      if (!content.trim() || isLoading) return;
+    async (content: string, attachment?: FileAttachment) => {
+      if ((!content.trim() && !attachment) || isLoading) return;
 
       setError(null);
 
       ensureConversation();
 
+      // Build the content that gets sent to the API
+      let apiContent = content.trim();
+      if (attachment) {
+        const fileHeader = `[File: ${attachment.name}]\n\`\`\`\n${attachment.textContent}\n\`\`\``;
+        apiContent = apiContent
+          ? `${fileHeader}\n\n${apiContent}`
+          : fileHeader;
+      }
+
+      // The user message shown in the UI keeps the original text
       const userMessage: Message = {
         id: generateId(),
         role: 'user',
-        content: content.trim(),
+        content: content.trim() || `📎 ${attachment!.name}`,
         timestamp: Date.now(),
+        attachment: attachment,
       };
 
       onUserMessage(userMessage);
 
-      const allMessages = [...messages, userMessage];
+      // For the API call, we use the full content including file text
+      const apiUserMessage = { ...userMessage, content: apiContent };
+      const allMessages = [...messages, apiUserMessage];
 
       setIsLoading(true);
 
