@@ -27,6 +27,10 @@ export async function sendMessage(
   }
 
   const data = (await res.json()) as ChatResponse;
-  return data.choices[0].message.content;
+  const content = data?.choices?.[0]?.message?.content;
+  if (!content) {
+    throw new Error('AI tidak memberikan respons. Coba lagi.');
+  }
+  return content;
 }
 
