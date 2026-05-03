@@ -1,4 +1,4 @@
-export type Mode = 'chat' | 'excel';
+export type Mode = 'chat' | 'excel' | 'image';
 
 export interface FileAttachment {
   name: string;

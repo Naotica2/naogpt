@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { MessageSquare, TableProperties, Sparkles, X } from 'lucide-react';
+import { MessageSquare, TableProperties, Image as ImageIcon, Sparkles, X } from 'lucide-react';
 import type { Message, Mode } from '../types';
 import { MessageBubble } from './MessageBubble';
 
@@ -25,6 +25,13 @@ const WELCOME = {
     icon: TableProperties,
     color: 'from-emerald-500/20 to-teal-500/20',
     iconColor: 'text-emerald-500 dark:text-emerald-400',
+  },
+  image: {
+    title: 'Image Generator',
+    subtitle: 'Describe the image you want to generate, and I will create it for you.',
+    icon: ImageIcon,
+    color: 'from-pink-500/20 to-rose-500/20',
+    iconColor: 'text-pink-500 dark:text-pink-400',
   },
 };
 

@@ -16,7 +16,20 @@ const MODE_CONFIG = {
     systemPrompt:
       'Nama kamu adalah NaoGPT, asisten AI cerdas yang dibuat oleh Rashya Adithiya. Jawab dengan ramah, informatif, dan sopan. Perkenalkan dirimu (nama dan pembuat) HANYA saat pengguna menyapa atau bertanya siapa kamu. Di luar itu, langsung jawab pertanyaan tanpa perlu menyebut nama atau pembuatmu lagi.',
   },
+  image: {
+    model: 'gemini-3-pro-image-preview',
+    systemPrompt:
+      'Kamu adalah NaoGPT Image Generator. Tugasmu adalah membuat dan menghasilkan gambar sesuai dengan deskripsi pengguna. Berikan response secara natural.',
+  },
 } as const;
+
+interface RateLimitData {
+  count: number;
+  resetAt: number;
+}
+const imageRateLimitMap = new Map<string, RateLimitData>();
+const IMAGE_DAILY_LIMIT = 4;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -28,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const { mode, messages } = req.body as {
-    mode: 'chat' | 'excel';
+    mode: 'chat' | 'excel' | 'image';
     messages: { role: string; content: string }[];
   };
 
@@ -39,6 +52,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const config = MODE_CONFIG[mode];
   if (!config) {
     return res.status(400).json({ error: 'Invalid mode' });
+  }
+
+  // Rate Limiting Khusus Image Mode (4 per day)
+  if (mode === 'image') {
+    const forwardedFor = req.headers['x-forwarded-for'];
+    const ip = typeof forwardedFor === 'string' ? forwardedFor.split(',')[0].trim() : (req.socket?.remoteAddress || 'unknown');
+    
+    const now = Date.now();
+    const userLimit = imageRateLimitMap.get(ip);
+
+    if (userLimit && now > userLimit.resetAt) {
+      // Reset kuota setelah 24 jam
+      imageRateLimitMap.set(ip, { count: 1, resetAt: now + ONE_DAY_MS });
+    } else if (userLimit) {
+      if (userLimit.count >= IMAGE_DAILY_LIMIT) {
+        return res.status(429).json({ 
+          error: `Limit pembuatan gambar harian tercapai (maksimal ${IMAGE_DAILY_LIMIT}/hari). Silakan coba lagi besok untuk menghemat kuota.` 
+        });
+      }
+      userLimit.count += 1;
+    } else {
+      imageRateLimitMap.set(ip, { count: 1, resetAt: now + ONE_DAY_MS });
+    }
   }
 
   const apiMessages = [

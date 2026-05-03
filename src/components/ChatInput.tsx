@@ -12,6 +12,7 @@ interface ChatInputProps {
 const PLACEHOLDERS: Record<Mode, string> = {
   chat: 'Ask NaoGPT anything...',
   excel: 'Describe the formula you need...',
+  image: 'Describe the image you want to generate...',
 };
 
 function getFileIcon(name: string) {
@@ -88,7 +89,7 @@ export function ChatInput({ mode, onSend, isLoading }: ChatInputProps) {
   const canSend = (value.trim() || attachment) && !isLoading && !isProcessing;
 
   return (
-    <div className="bg-gradient-to-t from-white via-white to-white/0 dark:from-neutral-950 dark:via-neutral-950 dark:to-neutral-950/0 p-4 pt-6">
+    <div className="bg-gradient-to-t from-white via-white to-white/0 dark:from-neutral-950 dark:via-neutral-950 dark:to-neutral-950/0 p-2 sm:p-4 pt-3 sm:pt-6">
       <div className="max-w-5xl mx-auto">
         {/* File attachment preview */}
         {attachment && (
@@ -117,7 +118,7 @@ export function ChatInput({ mode, onSend, isLoading }: ChatInputProps) {
           </div>
         )}
 
-        <div className="relative flex items-end gap-2 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border border-neutral-200/60 dark:border-neutral-700/60 rounded-2xl p-2 shadow-lg shadow-neutral-200/50 dark:shadow-none focus-within:ring-2 focus-within:ring-indigo-500/30 focus-within:border-indigo-500/50 transition-all">
+        <div className="relative flex items-end gap-1.5 sm:gap-2 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border border-neutral-200/60 dark:border-neutral-700/60 rounded-2xl p-1 sm:p-2 shadow-lg shadow-neutral-200/50 dark:shadow-none focus-within:ring-2 focus-within:ring-indigo-500/30 focus-within:border-indigo-500/50 transition-all">
           {/* Attach button */}
           <input
             ref={fileInputRef}
@@ -149,7 +150,7 @@ export function ChatInput({ mode, onSend, isLoading }: ChatInputProps) {
             placeholder={PLACEHOLDERS[mode]}
             disabled={isLoading}
             rows={1}
-            className="flex-1 resize-none bg-transparent text-[15px] leading-relaxed text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 outline-none py-2.5 px-1 max-h-40 disabled:opacity-50"
+            className="flex-1 resize-none bg-transparent text-[14px] sm:text-[15px] leading-relaxed text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 outline-none py-2 sm:py-2.5 px-1 max-h-32 sm:max-h-40 disabled:opacity-50"
           />
           <button
             onClick={handleSubmit}

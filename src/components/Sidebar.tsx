@@ -55,7 +55,7 @@ export function Sidebar({
         {/* Header area */}
         <div className="flex items-center justify-between p-4 pt-5">
           <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest">
-            {mode === 'chat' ? 'Chat' : 'Excel'} History
+            {mode === 'chat' ? 'Chat' : mode === 'excel' ? 'Excel' : 'Image'} History
           </span>
           <button
             onClick={onClose}
