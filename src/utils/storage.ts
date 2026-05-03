@@ -3,11 +3,13 @@ import type { Conversation, Mode } from '../types';
 const STORAGE_KEYS: Record<Mode, string> = {
   excel: 'naogpt_history_excel',
   chat: 'naogpt_history_chat',
+  image: 'naogpt_history_image',
 };
 
 const ACTIVE_CONVERSATION_KEYS: Record<Mode, string> = {
   excel: 'naogpt_active_excel',
   chat: 'naogpt_active_chat',
+  image: 'naogpt_active_image',
 };
 
 const THEME_KEY = 'naogpt_theme';
