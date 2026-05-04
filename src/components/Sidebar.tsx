@@ -116,7 +116,7 @@ export function Sidebar({
                         e.stopPropagation();
                         onDelete(conv.id);
                       }}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 transition-all shrink-0 -mr-1"
+                      className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 p-1.5 rounded-md text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 transition-all shrink-0 -mr-1"
                       aria-label="Delete conversation"
                     >
                       <Trash2 size={16} strokeWidth={2} />
