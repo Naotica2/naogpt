@@ -1,7 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-const TINKROW_API_URL = 'https://base.tinkrow.space/api/chat/v1/chat/completions';
-const API_KEY = process.env.TINKROW_API_KEY;
+const TINKROW_CHAT_URL = 'https://base.tinkrow.space/api/chat/v1/chat/completions';
+const TINKROW_IMAGE_URL = 'https://api.tinkrow.space/api/v1/images/generation';
+// Mengambil API Key yang disetting di Vercel atau file .env (lokal)
+// Pastikan nama variabel env di Vercel adalah TINKROW_API_KEY
+const API_KEY = process.env.TINKROW_API_KEY || 'sk_eur5lwqgn_eur5lwqgn';
 
 export const maxDuration = 60;
 
@@ -12,14 +15,13 @@ const MODE_CONFIG = {
       'Kamu adalah NaoGPT, asisten ahli pembuat rumus Excel dan Google Sheets. Jika pengguna meminta rumus, berikan rumus yang paling tepat dan efisien dalam format markdown code block (```excel), diikuti dengan penjelasan singkat yang mudah dipahami (maksimal 2-3 kalimat). Jika pengguna hanya menyapa, mengobrol, bertanya, atau mengonfirmasi (bukan meminta rumus baru), jawablah dengan natural, responsif, dan ramah seperti manusia tanpa memaksakan memberikan rumus. Hindari memberikan rumus jika tidak relevan dengan konteks percakapan saat itu.',
   },
   chat: {
-    model: 'vertex_ai/zai-org/glm-4.7-maas',
+    model: 'vertex_ai/openai/gpt-oss-20b-maas', // Menggunakan GPT-OSS 20B sesuai permintaan
     systemPrompt:
       'Nama kamu adalah NaoGPT, asisten AI cerdas yang dibuat oleh Rashya Adithiya. Jawab dengan ramah, informatif, dan sopan. Perkenalkan dirimu (nama dan pembuat) HANYA saat pengguna menyapa atau bertanya siapa kamu. Di luar itu, langsung jawab pertanyaan tanpa perlu menyebut nama atau pembuatmu lagi.',
   },
   image: {
-    model: 'gemini-3-pro-image-preview',
-    systemPrompt:
-      'Kamu adalah NaoGPT Image Generator. Tugasmu adalah membuat dan menghasilkan gambar sesuai dengan deskripsi pengguna. Berikan response secara natural.',
+    model: 'vertex_ai/gemini-2.5-flash-image', // Model khusus untuk endpoint image generation
+    systemPrompt: '', // Endpoint image generation tidak butuh system prompt
   },
 } as const;
 
@@ -77,13 +79,61 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  const apiMessages = [
-    { role: 'system', content: config.systemPrompt },
-    ...messages,
-  ];
-
   try {
-    const response = await fetch(TINKROW_API_URL, {
+    if (mode === 'image') {
+      // Ambil prompt dari pesan terakhir pengguna
+      const lastUserMessage = messages.filter(m => m.role === 'user').pop()?.content || 'Gambar random';
+      
+      const response = await fetch(TINKROW_IMAGE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': API_KEY,
+        },
+        body: JSON.stringify({
+          prompt: lastUserMessage,
+          model: config.model,
+          n: 1,
+          size: "1024x1024",
+          quality: "standard"
+        }),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error('Tinkrow Image API error:', response.status, errorBody);
+        return res.status(response.status).json({
+          error: `Upstream Image API error: ${response.status}`,
+        });
+      }
+
+      const data = await response.json();
+      const imageUrl = data.data?.[0]?.url;
+
+      if (!imageUrl) {
+        throw new Error('Image URL not found in response');
+      }
+
+      // Format response agar sesuai dengan format chat yang diharapkan frontend
+      return res.status(200).json({
+        choices: [
+          {
+            message: {
+              role: 'assistant',
+              content: `Berikut adalah gambar yang kamu minta:\n\n![Generated Image](${imageUrl})`
+            }
+          }
+        ]
+      });
+    }
+
+    // Handle 'chat' dan 'excel' modes
+    const apiMessages = [
+      { role: 'system', content: config.systemPrompt },
+      ...messages,
+    ];
+
+    const response = await fetch(TINKROW_CHAT_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -99,7 +149,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error('Tinkrow API error:', response.status, errorBody);
+      console.error('Tinkrow Chat API error:', response.status, errorBody);
       return res.status(response.status).json({
         error: `Upstream API error: ${response.status}`,
       });
