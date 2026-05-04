@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const TINKROW_CHAT_URL = 'https://base.tinkrow.space/api/chat/v1/chat/completions';
-const TINKROW_IMAGE_URL = 'https://api.tinkrow.space/api/v1/images/generation';
+const TINKROW_IMAGE_URL = 'https://base.tinkrow.space/api/chat/v1/images/generations';
 const API_KEY = process.env.TINKROW_API_KEY;
 
 export const maxDuration = 60;
