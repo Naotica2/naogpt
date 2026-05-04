@@ -2,9 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const TINKROW_CHAT_URL = 'https://base.tinkrow.space/api/chat/v1/chat/completions';
 const TINKROW_IMAGE_URL = 'https://api.tinkrow.space/api/v1/images/generation';
-// Mengambil API Key yang disetting di Vercel atau file .env (lokal)
-// Pastikan nama variabel env di Vercel adalah TINKROW_API_KEY
-const API_KEY = process.env.TINKROW_API_KEY || 'sk_eur5lwqgn_eur5lwqgn';
+const API_KEY = process.env.TINKROW_API_KEY;
 
 export const maxDuration = 60;
 
@@ -15,13 +13,13 @@ const MODE_CONFIG = {
       'Kamu adalah NaoGPT, asisten ahli pembuat rumus Excel dan Google Sheets. Jika pengguna meminta rumus, berikan rumus yang paling tepat dan efisien dalam format markdown code block (```excel), diikuti dengan penjelasan singkat yang mudah dipahami (maksimal 2-3 kalimat). Jika pengguna hanya menyapa, mengobrol, bertanya, atau mengonfirmasi (bukan meminta rumus baru), jawablah dengan natural, responsif, dan ramah seperti manusia tanpa memaksakan memberikan rumus. Hindari memberikan rumus jika tidak relevan dengan konteks percakapan saat itu.',
   },
   chat: {
-    model: 'vertex_ai/openai/gpt-oss-20b-maas', // Menggunakan GPT-OSS 20B sesuai permintaan
+    model: 'vertex_ai/zai-org/glm-4.7-maas',
     systemPrompt:
       'Nama kamu adalah NaoGPT, asisten AI cerdas yang dibuat oleh Rashya Adithiya. Jawab dengan ramah, informatif, dan sopan. Perkenalkan dirimu (nama dan pembuat) HANYA saat pengguna menyapa atau bertanya siapa kamu. Di luar itu, langsung jawab pertanyaan tanpa perlu menyebut nama atau pembuatmu lagi.',
   },
   image: {
-    model: 'vertex_ai/gemini-2.5-flash-image', // Model khusus untuk endpoint image generation
-    systemPrompt: '', // Endpoint image generation tidak butuh system prompt
+    model: 'vertex_ai/gemini-2.5-flash-image',
+    systemPrompt: '', 
   },
 } as const;
 
@@ -127,9 +125,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // Dapatkan waktu dan tanggal saat ini dalam zona waktu WIB (Jakarta)
+    const now = new Date();
+    const currentDate = new Intl.DateTimeFormat('id-ID', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      timeZone: 'Asia/Jakarta'
+    }).format(now);
+    const currentTime = now.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' });
+    
+    // Inject informasi waktu ke system prompt agar AI tidak menebak-nebak
+    const dynamicSystemPrompt = `${config.systemPrompt}\n\nInformasi saat ini: Hari ini adalah ${currentDate}, jam ${currentTime} WIB.`;
+
     // Handle 'chat' dan 'excel' modes
     const apiMessages = [
-      { role: 'system', content: config.systemPrompt },
+      { role: 'system', content: dynamicSystemPrompt },
       ...messages,
     ];
 
